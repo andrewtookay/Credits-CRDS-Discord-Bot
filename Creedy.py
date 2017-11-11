@@ -17,16 +17,16 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    sign = message.content[0]
     final_message = ''
+    link = ''
 
-    if message.content.startswith('?help'):
-        final_message = 'These are the available commands:\n$<currency ticker>\n?help'
+    if message.content.startswith('!help'):
+        final_message = 'These are the available commands:\n$<currency ticker>\n!website\n!explorer\n!mnroi <no. of MN>\n!help'
     
     elif message.content.startswith(json_bot_input['exitPassword']):
         await client.logout()
 
-    elif sign == '$':
+    elif message.content.startswith('$'):
         coin_ticker = message.content[1:7]
         coin_ticker = coin_ticker.upper()
 
@@ -69,10 +69,92 @@ async def on_message(message):
         else:
             final_message = 'Something went wrong. Contact the team.'
 
-    elif message.content[1] != ' ' and ((sign == '?' and message.content[1] != '?') or (sign == '$' and message.content[1] != '$')):
+    elif message.content.startswith('!website') or message.content.startswith('!site'):
+        final_message = 'Credits Website: '
+        link = 'https://crds.co/'
+
+    elif message.content.startswith('!explorer'):
+        final_message = 'Credits Explorer: '
+        link = 'http://explorer.crds.co/'
+
+    elif message.content.startswith('!mnroi'):
+        no_mn = message.content[7:]
+
+        final_message = getMnRoi(no_mn)
+
+    elif len(message.content) > 1 and message.content[1] != ' ' and ((message.content[0] == '!' and message.content[1] != '!' and message.content[1] != '?') or (message.content[0] == '$' and message.content[1] != '$')):
         final_message = 'Invalid command. Use ?help to see the available commands.'
 
     if final_message != '':
-        await client.send_message(message.channel, '```' + final_message + '```')
+        await client.send_message(message.channel, '`' + final_message + '`' + link)
+
+def getMnRoi(no_mn):
+    final_message = ''
+    no_mn = int(no_mn)
+
+    json_bitfinex = requests.get('https://api.bitfinex.com/v1/pubticker/BTCUSD').json()
+    btc_usd = float(json_bitfinex['last_price'])
+
+    json_coinsm = requests.get('https://coinsmarkets.com/apicoin.php').json()
+    crds_btc = float(json_coinsm['BTC_CRDS']['last'])
+
+    crds_usd = crds_btc * btc_usd
+
+    mncount = requests.get('http://explorer.crds.co/mncount.txt')
+    mncount = float(mncount.text)
+
+    blockcount = requests.get('http://explorer.crds.co/blockcount.txt')
+    blockcount = int(blockcount.text)
+
+    if blockcount <= 493088:
+        reward = 1
+    elif blockcount <= 986175: 
+        reward = 2
+    elif blockcount <= 1479263:
+        reward = 3
+    elif blockcount <= 1972350:
+        reward = 4
+    elif blockcount <= 2465438:
+        reward = 5
+    elif blockcount <= 2958525:
+        reward = 6
+    elif blockcount <= 3451613:
+        reward = 7
+    elif blockcount <= 3944700:
+        reward = 8
+    elif blockcount <= 4437788:
+        reward = 9
+    else:
+        reward = 10
+
+    reward = float(reward)
+
+    final_message = 'No. of Masternodes: ' + str(no_mn)
+    final_message += '\nCollateral (CRDS): ' + str(5000 * no_mn)
+    final_message += '\nCRDS Value (BTC): ' + str('{0:.8f}'.format(round(crds_btc, 8)))
+    final_message += '\nCRDS Value (USD): ' + str(round(crds_usd, 4))
+    final_message += '\n'
+
+    total_crds_col = float(no_mn * 5000)
+
+    final_message += '\nTotal collateral cost for ' + str(no_mn) + ' MN (USD): ' + str(round(total_crds_col * crds_usd, 2))
+    final_message += '\nTotal collateral cost for ' + str(no_mn) + ' MN (BTC): ' + str(round(total_crds_col * crds_btc, 2))
+    final_message += '\n'
+
+    mncount = float(mncount)
+    crds_per_day_per_mn = reward * 675 / mncount
+        
+    final_message += '\nMasternode Block Reward: ' + str(int(reward))
+    final_message += '\nCRDS per day for ' + str(int(no_mn)) + ' MN: ' + str(round(no_mn * crds_per_day_per_mn, 4))
+    final_message += '\nBTC per day for ' + str(int(no_mn)) + ' MN: ' + str('{0:.8f}'.format(round(no_mn * crds_per_day_per_mn * crds_btc, 8)))
+    final_message += '\n'
+
+    usd_per_day_per_mn = crds_per_day_per_mn * crds_usd
+
+    final_message += '\nUSD per day for ' + str(int(no_mn)) + ' MN: ' + str(round(no_mn * usd_per_day_per_mn, 4))
+    final_message += '\nUSD per month for ' + str(int(no_mn)) + ' MN: ' + str(round(no_mn * usd_per_day_per_mn * 30, 4))
+    final_message += '\nUSD per annum for ' + str(int(no_mn)) + ' MN: ' + str(round(no_mn * usd_per_day_per_mn * 365, 4))
+
+    return final_message
 
 client.run(json_bot_input['token'])

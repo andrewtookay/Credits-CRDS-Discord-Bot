@@ -83,7 +83,7 @@ async def on_message(message):
         final_message = getMnRoi(no_mn)
 
     elif len(message.content) > 1 and message.content[1] != ' ' and ((message.content[0] == '!' and message.content[1] != '!' and message.content[1] != '?') or (message.content[0] == '$' and message.content[1] != '$')):
-        final_message = 'Invalid command. Use ?help to see the available commands.'
+        final_message = 'Invalid command. Use !help to see the available commands.'
 
     if final_message != '':
         await client.send_message(message.channel, '`' + final_message + '`' + link)

@@ -69,6 +69,16 @@ async def on_message(message):
         else:
             final_message = 'Something went wrong. Contact the team.'
 
+    elif message.content.startswith('!mnroi'):
+        no_mn = message.content[6:]
+        ok = 0
+
+        try:
+            no_mn = int(no_mn.strip())
+            final_message = getMnRoi(no_mn)
+        except ValueError:
+            final_message = 'Invalid number of Masternodes.'
+
     elif message.content.startswith('!website') or message.content.startswith('!site'):
         final_message = 'Credits Website: '
         link = 'https://crds.co/'
@@ -77,23 +87,17 @@ async def on_message(message):
         final_message = 'Credits Explorer: '
         link = 'http://explorer.crds.co/'
 
-    elif message.content.startswith('!mnroi'):
-        no_mn = message.content[7:]
-
-        final_message = getMnRoi(no_mn)
-
     elif len(message.content) > 1 and message.content[1] != ' ' and ((message.content[0] == '!' and message.content[1] != '!' and message.content[1] != '?') or (message.content[0] == '$' and message.content[1] != '$')):
-        final_message = 'Invalid command. Use !help to see the available commands.'
+        final_message = 'Invalid command. Use ?help to see the available commands.'
 
     if final_message != '':
         await client.send_message(message.channel, '`' + final_message + '`' + link)
 
 def getMnRoi(no_mn):
     final_message = ''
-    no_mn = int(no_mn)
 
-    json_bitfinex = requests.get('https://api.bitfinex.com/v1/pubticker/BTCUSD').json()
-    btc_usd = float(json_bitfinex['last_price'])
+    json_cmc = requests.get('https://api.coinmarketcap.com/v1/ticker/').json()
+    btc_usd = float(json_cmc[0]['price_usd'])
 
     json_coinsm = requests.get('https://coinsmarkets.com/apicoin.php').json()
     crds_btc = float(json_coinsm['BTC_CRDS']['last'])
@@ -131,20 +135,20 @@ def getMnRoi(no_mn):
 
     final_message = 'No. of Masternodes: ' + str(no_mn)
     final_message += '\nCollateral (CRDS): ' + str(5000 * no_mn)
-    final_message += '\nCRDS Value (BTC): ' + str('{0:.8f}'.format(round(crds_btc, 8)))
-    final_message += '\nCRDS Value (USD): ' + str(round(crds_usd, 4))
+    final_message += '\nCRDS Value (BTC): ' + str('{0:.8f}'.format(round(crds_btc, 8))) + ' BTC / $' + str(round(crds_usd, 4))
     final_message += '\n'
 
     total_crds_col = float(no_mn * 5000)
+    total_btc_col = round(total_crds_col * crds_btc, 8)
+    total_usd_col = round(total_crds_col * crds_usd, 2)
 
-    final_message += '\nTotal collateral cost for ' + str(no_mn) + ' MN (USD): ' + str(round(total_crds_col * crds_usd, 2))
-    final_message += '\nTotal collateral cost for ' + str(no_mn) + ' MN (BTC): ' + str(round(total_crds_col * crds_btc, 2))
+    final_message += '\nTotal collateral cost for ' + str(no_mn) + ' MN: ' + str(total_btc_col) + ' BTC / $' + str(total_usd_col)
     final_message += '\n'
 
     mncount = float(mncount)
     crds_per_day_per_mn = reward * 675 / mncount
         
-    final_message += '\nMasternode Block Reward: ' + str(int(reward))
+    final_message += '\nMasternode Block Reward: ' + str(int(reward)) + ' CRDS'
     final_message += '\nCRDS per day for ' + str(int(no_mn)) + ' MN: ' + str(round(no_mn * crds_per_day_per_mn, 4))
     final_message += '\nBTC per day for ' + str(int(no_mn)) + ' MN: ' + str('{0:.8f}'.format(round(no_mn * crds_per_day_per_mn * crds_btc, 8)))
     final_message += '\n'
@@ -154,6 +158,11 @@ def getMnRoi(no_mn):
     final_message += '\nUSD per day for ' + str(int(no_mn)) + ' MN: ' + str(round(no_mn * usd_per_day_per_mn, 4))
     final_message += '\nUSD per month for ' + str(int(no_mn)) + ' MN: ' + str(round(no_mn * usd_per_day_per_mn * 30, 4))
     final_message += '\nUSD per annum for ' + str(int(no_mn)) + ' MN: ' + str(round(no_mn * usd_per_day_per_mn * 365, 4))
+    final_message += '\n'
+
+    roi = (usd_per_day_per_mn * 365) / (5000 * crds_usd) * 100
+
+    final_message += '\nROI: ' + str(round(roi, 2)) + '%'
 
     return final_message
 

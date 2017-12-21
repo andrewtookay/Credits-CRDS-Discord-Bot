@@ -96,19 +96,23 @@ async def on_message(message):
 def getMnRoi(no_mn):
     final_message = ''
 
-    json_cmc = requests.get('https://api.coinmarketcap.com/v1/ticker/').json()
-    btc_usd = float(json_cmc[0]['price_usd'])
+    try:
+        json_cmc = requests.get('https://api.coinmarketcap.com/v1/ticker/').json()
+        btc_usd = float(json_cmc[0]['price_usd'])
 
-    json_coinsm = requests.get('https://coinsmarkets.com/apicoin.php').json()
-    crds_btc = float(json_coinsm['BTC_CRDS']['last'])
+        json_coinsm = requests.get('https://coinsmarkets.com/apicoin.php').json()
+        crds_btc = float(json_coinsm['BTC_CRDS']['last'])
+
+        mncount = requests.get('http://explorer.crds.co/mncount.txt')
+        mncount = float(mncount.text)
+
+        blockcount = requests.get('http://explorer.crds.co/blockcount.txt')
+        blockcount = int(blockcount.text)
+    except:
+        final_message = 'Command unavailable due to downtime of explorer or APIs.'
+        return final_message
 
     crds_usd = crds_btc * btc_usd
-
-    mncount = requests.get('http://explorer.crds.co/mncount.txt')
-    mncount = float(mncount.text)
-
-    blockcount = requests.get('http://explorer.crds.co/blockcount.txt')
-    blockcount = int(blockcount.text)
 
     if blockcount <= 493088:
         reward = 1

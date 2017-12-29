@@ -1,4 +1,5 @@
 import discord
+import signal
 import requests
 import asyncio
 import json
@@ -39,7 +40,7 @@ async def on_message(message):
             if ticker['symbol'] == coin_ticker:
                 goCMC = 1
                 coinCMC = ticker
-
+        '''
         if goCMC == 0:
             coinsm_api = 'https://coinsmarkets.com/apicoin.php'
             trade_ticker = 'BTC_' + coin_ticker
@@ -47,9 +48,32 @@ async def on_message(message):
             for ticker in json_coinsm:
                 if ticker == trade_ticker:
                     goCoinsM = 1
-
+            
         if goCMC == 0 and goCoinsM == 0:    
             final_message = 'Invalid ticker.'
+            final_message = 'Invalid ticker.'
+        '''
+        if coin_ticker.upper() == 'CRDS':
+            crds_usd = requests.get('https://crds.co/calc/crds_usd.txt')
+            crds_usd = float(crds_usd.text)
+
+            crds_btc = requests.get('https://crds.co/calc/crds_btc.txt')
+            crds_btc = float(crds_btc.text)
+
+            supply = requests.get('https://crds.co/calc/crds_supply.txt')
+            supply = supply.text
+
+            volume = requests.get('https://crds.co/calc/crds_vol.txt')
+            volume = float(volume.text)
+
+            import re
+            supply = re.sub(',', '', supply)
+
+            supply = float(supply)
+
+            marketcap = round(crds_usd * supply, 2)
+
+            final_message = 'Ticker: ' + coin_ticker + '\n' + 'Last price: ' + str('{0:.8f}'.format(round(crds_btc, 8)))  + ' BTC\n' + 'Volume(24h): ' + str(volume) + ' BTC\n' + 'Marketcap: ' + str(marketcap) + ' USD'
 
         elif goCMC == 1:
             json_coin_name = coinCMC['name']
@@ -58,13 +82,15 @@ async def on_message(message):
             json_24h_volume = coinCMC['24h_volume_usd']
             json_percent_change = coinCMC['percent_change_24h']
 
-            final_message = 'Coin Name: ' + str(json_coin_name) + '\nTicker: ' + coin_ticker + '\n' + 'Price (BTC): ' + str(json_price_btc)  + '\n' + 'Price (USD): ' + str(json_price_usd)  + '\n' + 'Volume(24h): ' + str(json_24h_volume) + ' USD\n' + 'Change (24h): ' + str(json_percent_change) + '%'
-
-        elif goCoinsM == 1:
+            final_message = 'Coin Name: ' + str(json_coin_name) + '\nTicker: ' + coin_ticker + '\n' + 'Price (BTC): ' + str('{0:.8f}'.format(round(crds_btc, 8)))  + '\n' + 'Price (USD): ' + str(json_price_usd)  + '\n' + 'Volume(24h): ' + str(json_24h_volume) + ' USD\n' + 'Change (24h): ' + str(json_percent_change) + '%'
+        
+            '''
+            elif goCoinsM == 1:
             json_last_price = json_coinsm[trade_ticker]['last']
             json_24h_volume = json_coinsm[trade_ticker]['24htrade']
 
             final_message = 'Ticker: ' + coin_ticker + '\n' + 'Last price: ' + str(json_last_price)  + ' BTC\n' + 'Volume(24h): ' + str(json_24h_volume) + ' BTC'
+            '''
 
         else:
             final_message = 'Something went wrong. Contact the team.'
@@ -97,18 +123,23 @@ def getMnRoi(no_mn):
     final_message = ''
 
     try:
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(5)
+
         json_cmc = requests.get('https://api.coinmarketcap.com/v1/ticker/').json()
         btc_usd = float(json_cmc[0]['price_usd'])
 
-        json_coinsm = requests.get('https://coinsmarkets.com/apicoin.php').json()
-        crds_btc = float(json_coinsm['BTC_CRDS']['last'])
+        crds_btc = requests.get('https://crds.co/calc/crds_btc.txt')
+        crds_btc = float(crds_btc.text)
 
         mncount = requests.get('http://explorer.crds.co/mncount.txt')
         mncount = float(mncount.text)
 
         blockcount = requests.get('http://explorer.crds.co/blockcount.txt')
         blockcount = int(blockcount.text)
-    except:
+
+        signal.alarm(0)
+    except ValueError:
         final_message = 'Command unavailable due to downtime of explorer or APIs.'
         return final_message
 
@@ -170,4 +201,8 @@ def getMnRoi(no_mn):
 
     return final_message
 
+def handler(signum, frame):
+    raise Exception("Timeout.")
+
 client.run(json_bot_input['token'])
+

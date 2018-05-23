@@ -121,26 +121,34 @@ def getMnRoi(no_mn):
 
     crds_usd = crds_btc * btc_usd
 
-    if blockcount <= 493088:
+    if blockcount <= 375000:
         reward = 1
-    elif blockcount <= 986175: 
+    elif blockcount <= 500000: 
         reward = 2
-    elif blockcount <= 1479263:
+    elif blockcount <= 625000:
         reward = 3
-    elif blockcount <= 1972350:
+    elif blockcount <= 750000:
         reward = 4
-    elif blockcount <= 2465438:
+    elif blockcount <= 875000:
         reward = 5
-    elif blockcount <= 2958525:
+    elif blockcount <= 1000000:
         reward = 6
-    elif blockcount <= 3451613:
+    elif blockcount <= 1125000:
         reward = 7
-    elif blockcount <= 3944700:
+    elif blockcount <= 1375000:
         reward = 8
-    elif blockcount <= 4437788:
-        reward = 9
+    elif blockcount <= 1500000:
+        reward = 7
+    elif blockcount <= 1625000:
+        reward = 6
+    elif blockcount <= 1750000:
+        reward = 5
+    elif blockcount <= 1875000:
+        reward = 4
+    elif blockcount <= 2000000:
+        reward = 3
     else:
-        reward = 10
+        reward = 2
 
     reward = float(reward)
 

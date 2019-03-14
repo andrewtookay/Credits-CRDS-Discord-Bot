@@ -92,7 +92,7 @@ async def on_message(message):
 
     elif message.content.startswith('!explorer'):
         final_message = 'Credits Explorer: '
-        link = 'http://explorer.crds.co/'
+        link = 'https://explorer.crds.co/'
 
     elif len(message.content) > 1 and message.content[1] != ' ' and ((message.content[0] == '!' and message.content[1] != '!' and message.content[1] != '?') or (message.content[0] == '$' and message.content[1] != '$')):
         final_message = 'Invalid command. Use !help to see the available commands.'
@@ -110,10 +110,10 @@ def getMnRoi(no_mn):
         crds_btc = requests.get('https://crds.co/calc/crds_btc.txt')
         crds_btc = float(crds_btc.text)
 
-        mncount = requests.get('http://explorer.crds.co/mncount.txt')
+        mncount = requests.get('https://crds.co/calc/crds_mncount.txt')
         mncount = float(mncount.text)
 
-        blockcount = requests.get('http://explorer.crds.co/blockcount.txt')
+        blockcount = requests.get('https://crds.co/calc/crds_blockcount.txt')
         blockcount = int(blockcount.text)
 
     except:
